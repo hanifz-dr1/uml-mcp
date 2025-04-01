@@ -8,11 +8,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     graphviz \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies first (for better caching)
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements file first for better caching
+COPY requirements.txt ./
 
 # Copy source code
 COPY . .
@@ -23,5 +23,5 @@ RUN mkdir -p /app/output
 # Expose port for API
 EXPOSE 8000
 
-# Command to run the MCP server
-CMD ["python", "mcp_server.py"]
+# Set entrypoint for stdio mode
+ENTRYPOINT ["python", "mcp_server.py", "--transport", "stdio"]
