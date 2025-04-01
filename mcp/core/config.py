@@ -20,6 +20,7 @@ class MCPSettings(BaseModel):
     output_dir: str = os.environ.get("MCP_OUTPUT_DIR", os.path.join(os.getcwd(), "output"))
     tools: List[str] = []
     prompts: List[str] = []
+    resources: List[str] = []  # Added resources field
     diagram_types: Dict[str, DiagramType] = {}
     plantuml_server: str = os.environ.get("PLANTUML_SERVER", "http://plantuml-server:8080")
     kroki_server: str = os.environ.get("KROKI_SERVER", "https://kroki.io")

@@ -1,11 +1,10 @@
 """
-MCP tools for diagram generation
+MCP tools for diagram generation using the decorator pattern
 """
 
 import logging
-import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 # Import FastMCP with error handling to fix testing issues
 try:
@@ -29,149 +28,291 @@ except ImportError:
                     return func
                 return decorator
 
+# Import the tool decorator system
+from .tool_decorator import mcp_tool, register_tools_with_server, get_tool_registry
+
+# Import core utilities
 from ..core.utils import generate_diagram
 from ..core.config import MCP_SETTINGS
 
 logger = logging.getLogger(__name__)
 
-def register_diagram_tools(server: FastMCP):
+# Main UML generation tool
+@mcp_tool(
+    description="Generate any UML diagram based on diagram type",
+    category="uml"
+)
+def generate_uml(diagram_type: str, code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML diagram using the specified diagram type.
+    
+    Args:
+        diagram_type: Type of diagram (class, sequence, activity, etc.)
+        code: The diagram code/description
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_uml tool: type={diagram_type}, code length={len(code)}")
+    
+    # Validate diagram type
+    valid_types = getattr(MCP_SETTINGS, 'diagram_types', {})
+    if not valid_types:
+        valid_types = {"class": "Class diagram", "sequence": "Sequence diagram"}
+        
+    if diagram_type.lower() not in valid_types:
+        error_msg = f"Unsupported diagram type: {diagram_type}. Supported types: {', '.join(valid_types.keys())}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+    
+    # Generate diagram - use default format "svg" to match tests
+    return generate_diagram(diagram_type, code, "svg", output_dir)
+
+# Class diagram tool
+@mcp_tool(
+    description="Generate UML class diagram from PlantUML code",
+    category="uml",
+    example="generate_class_diagram('@startuml\\nclass User\\n@enduml', './output')"
+)
+def generate_class_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML class diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_class_diagram tool: code length={len(code)}")
+    return generate_uml("class", code, output_dir)
+
+# Sequence diagram tool
+@mcp_tool(
+    description="Generate UML sequence diagram from PlantUML code",
+    category="uml"
+)
+def generate_sequence_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML sequence diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_sequence_diagram tool: code length={len(code)}")
+    return generate_uml("sequence", code, output_dir)
+
+# Activity diagram tool
+@mcp_tool(
+    description="Generate UML activity diagram from PlantUML code",
+    category="uml"
+)
+def generate_activity_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML activity diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_activity_diagram tool: code length={len(code)}")
+    return generate_uml("activity", code, output_dir)
+
+# Use case diagram tool
+@mcp_tool(
+    description="Generate UML use case diagram from PlantUML code",
+    category="uml"
+)
+def generate_usecase_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML use case diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_usecase_diagram tool: code length={len(code)}")
+    return generate_uml("usecase", code, output_dir)
+
+# State diagram tool
+@mcp_tool(
+    description="Generate UML state diagram from PlantUML code",
+    category="uml"
+)
+def generate_state_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML state diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_state_diagram tool: code length={len(code)}")
+    return generate_uml("state", code, output_dir)
+
+# Component diagram tool
+@mcp_tool(
+    description="Generate UML component diagram from PlantUML code",
+    category="uml"
+)
+def generate_component_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML component diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_component_diagram tool: code length={len(code)}")
+    return generate_uml("component", code, output_dir)
+
+# Deployment diagram tool
+@mcp_tool(
+    description="Generate UML deployment diagram from PlantUML code",
+    category="uml"
+)
+def generate_deployment_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML deployment diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_deployment_diagram tool: code length={len(code)}")
+    return generate_uml("deployment", code, output_dir)
+
+# Object diagram tool
+@mcp_tool(
+    description="Generate UML object diagram from PlantUML code",
+    category="uml"
+)
+def generate_object_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a UML object diagram from PlantUML code.
+    
+    Args:
+        code: The PlantUML diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_object_diagram tool: code length={len(code)}")
+    return generate_uml("object", code, output_dir)
+
+# Mermaid diagram tool
+@mcp_tool(
+    description="Generate diagrams using Mermaid syntax",
+    category="other"
+)
+def generate_mermaid_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a diagram using Mermaid syntax.
+    
+    Args:
+        code: The Mermaid diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_mermaid_diagram tool: code length={len(code)}")
+    return generate_uml("mermaid", code, output_dir)
+
+# D2 diagram tool
+@mcp_tool(
+    description="Generate diagrams using D2 syntax",
+    category="other"
+)
+def generate_d2_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a diagram using D2 syntax.
+    
+    Args:
+        code: The D2 diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_d2_diagram tool: code length={len(code)}")
+    return generate_uml("d2", code, output_dir)
+
+# Graphviz diagram tool
+@mcp_tool(
+    description="Generate diagrams using Graphviz DOT syntax",
+    category="other"
+)
+def generate_graphviz_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate a diagram using Graphviz DOT syntax.
+    
+    Args:
+        code: The Graphviz DOT code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_graphviz_diagram tool: code length={len(code)}")
+    return generate_uml("graphviz", code, output_dir)
+
+# ERD diagram tool
+@mcp_tool(
+    description="Generate Entity-Relationship diagrams",
+    category="database"
+)
+def generate_erd_diagram(code: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Generate an Entity-Relationship diagram.
+    
+    Args:
+        code: The ERD diagram code
+        output_dir: Directory where to save the generated image (optional)
+    
+    Returns:
+        Dictionary containing code, URL, and local file path
+    """
+    logger.info(f"Called generate_erd_diagram tool: code length={len(code)}")
+    return generate_uml("erd", code, output_dir)
+
+def register_diagram_tools(server: FastMCP) -> List[str]:
     """
     Register all diagram generation tools with the MCP server
     
     Args:
         server: The MCP server instance
+        
+    Returns:
+        List of registered tool names
     """
     logger.info("Registering diagram tools")
     
-    # Initialize tools list if not present
-    if not hasattr(server, '_tools'):
-        server._tools = {}
+    # Register all tools that were decorated with @mcp_tool
+    registered_tools = register_tools_with_server(server)
     
-    # Define the generate_uml function
-    def generate_uml(diagram_type: str, code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a UML diagram using the specified diagram type.
-        
-        Args:
-            diagram_type: Type of diagram (class, sequence, activity, etc.)
-            code: The diagram code/description
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, and local file path
-        """
-        logger.info(f"Called generate_uml tool: type={diagram_type}, code length={len(code)}")
-        
-        # Validate diagram type
-        valid_types = getattr(MCP_SETTINGS, 'diagram_types', {})
-        if not valid_types:
-            valid_types = {"class": "Class diagram", "sequence": "Sequence diagram"}
-            
-        if diagram_type.lower() not in valid_types:
-            error_msg = f"Unsupported diagram type: {diagram_type}. Supported types: {', '.join(valid_types.keys())}"
-            logger.error(error_msg)
-            return {"error": error_msg}
-        
-        # Generate diagram - use default format "svg" to match tests
-        return generate_diagram(diagram_type, code, "svg", output_dir)
+    # Store registered tools in MCP_SETTINGS.tools (which is a standard attribute)
+    MCP_SETTINGS.tools = registered_tools
     
-    # Register the generate_uml tool in a way that matches the test expectations
-    if callable(server.tool):
-        server.tool()(generate_uml)
-    else:
-        server.tool("generate_uml", generate_uml)
+    logger.info(f"Registered {len(registered_tools)} diagram tools successfully")
+    logger.debug(f"Registered tools: {registered_tools}")
     
-    # Register other specific diagram tools
-    diagram_types = ["class", "sequence", "activity", "usecase", "state", "component", "deployment", "object"]
-    for diagram_type in diagram_types:
-        register_specific_diagram_tool(server, diagram_type, generate_uml)
-    
-    # Register other diagram tools
-    register_mermaid_tool(server, generate_uml)
-    register_d2_tool(server, generate_uml)
-    register_graphviz_tool(server, generate_uml)
-    register_erd_tool(server, generate_uml)
-    
-    logger.info(f"Registered {len(server._tools)} diagram tools successfully")
+    return registered_tools
 
-def register_specific_diagram_tool(server: FastMCP, diagram_type: str, generate_uml_func):
+def get_tool_info() -> Dict[str, Dict[str, Any]]:
     """
-    Register a tool for a specific diagram type
+    Get information about all registered tools
     
-    Args:
-        server: The MCP server instance
-        diagram_type: The diagram type to register
-        generate_uml_func: The generate_uml function to call
+    Returns:
+        Dictionary mapping tool names to their information
     """
-    def tool_function(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a specific diagram type.
-        
-        Args:
-            code: The diagram code
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, and local file path
-        """
-        logger.info(f"Called generate_{diagram_type}_diagram tool: code length={len(code)}")
-        return generate_uml_func(diagram_type, code, output_dir)
-    
-    # Register the tool with the server in a way that matches test expectations
-    tool_name = f"generate_{diagram_type}_diagram"
-    if callable(server.tool):
-        server.tool()(tool_function)
-    else:
-        server.tool(tool_name, tool_function)
-
-def register_mermaid_tool(server: FastMCP, generate_uml_func):
-    """
-    Register Mermaid diagram tool
-    
-    Args:
-        server: The MCP server instance
-        generate_uml_func: The generate_uml function to call
-    """
-    def generate_mermaid_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a Mermaid diagram."""
-        logger.info(f"Called generate_mermaid_diagram tool: code length={len(code)}")
-        return generate_uml_func("mermaid", code, output_dir)
-    
-    if callable(server.tool):
-        server.tool()(generate_mermaid_diagram)
-    else:
-        server._tools["generate_mermaid_diagram"] = generate_mermaid_diagram
-
-def register_d2_tool(server: FastMCP, generate_uml_func):
-    """Register D2 diagram tool"""
-    def generate_d2_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a D2 diagram."""
-        logger.info(f"Called generate_d2_diagram tool: code length={len(code)}")
-        return generate_uml_func("d2", code, output_dir)
-    
-    if callable(server.tool):
-        server.tool()(generate_d2_diagram)
-    else:
-        server._tools["generate_d2_diagram"] = generate_d2_diagram
-
-def register_graphviz_tool(server: FastMCP, generate_uml_func):
-    """Register Graphviz diagram tool"""
-    def generate_graphviz_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a Graphviz diagram."""
-        logger.info(f"Called generate_graphviz_diagram tool: code length={len(code)}")
-        return generate_uml_func("graphviz", code, output_dir)
-    
-    if callable(server.tool):
-        server.tool()(generate_graphviz_diagram)
-    else:
-        server._tools["generate_graphviz_diagram"] = generate_graphviz_diagram
-
-def register_erd_tool(server: FastMCP, generate_uml_func):
-    """Register ERD diagram tool"""
-    def generate_erd_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate an Entity-Relationship diagram."""
-        logger.info(f"Called generate_erd_diagram tool: code length={len(code)}")
-        return generate_uml_func("erd", code, output_dir)
-    
-    if callable(server.tool):
-        server.tool()(generate_erd_diagram)
-    else:
-        server._tools["generate_erd_diagram"] = generate_erd_diagram
+    return get_tool_registry()

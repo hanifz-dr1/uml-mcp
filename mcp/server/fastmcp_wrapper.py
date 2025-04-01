@@ -42,10 +42,35 @@ except ImportError:
             self.logger = logging.getLogger(__name__)
             self.logger.warning("Using mock FastMCP implementation")
         
-        def tool(self):
-            def decorator(func):
+        def tool(self, *args, **kwargs):
+            """Tool decorator with flexible argument handling to support different FastMCP interfaces.
+            
+            Supports:
+            - tool() -> returns decorator
+            - tool(func) -> decorates func directly
+            - tool(name="name", description="desc") -> returns decorator with metadata
+            - tool("description") -> returns decorator with description
+            """
+            # Check if first arg is a callable (the function to decorate)
+            if args and callable(args[0]):
+                func = args[0]
                 self._tools[func.__name__] = func
                 return func
+                
+            # Otherwise, return a decorator that will register the function
+            def decorator(func):
+                # Use custom name if provided
+                tool_name = kwargs.get('name', func.__name__)
+                self._tools[tool_name] = func
+                
+                # Store the metadata in the function if helpful
+                if 'description' in kwargs:
+                    func._tool_description = kwargs['description']
+                elif args and isinstance(args[0], str):
+                    func._tool_description = args[0]
+                    
+                return func
+                
             return decorator
             
         def prompt(self, prompt_name: str = None):

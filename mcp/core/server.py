@@ -6,7 +6,7 @@ import os
 import logging
 import json
 import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 
 # Import MCP server framework - try to use the wrapper
 try:
@@ -40,15 +40,16 @@ def create_mcp_server() -> FastMCP:
     server = FastMCP(MCP_SETTINGS.server_name)
     
     # Register all tools, resources, and prompts
-    register_diagram_tools(server)
-    register_diagram_resources(server)
-    register_diagram_prompts(server)
+    tool_names = register_diagram_tools(server)
+    resource_names = register_diagram_resources(server)
+    prompt_names = register_diagram_prompts(server)
     
     # Update settings with registered tools and prompts
-    MCP_SETTINGS.tools = [name for name, _ in server._tools.items()]
-    MCP_SETTINGS.prompts = [name for name, _ in server._prompts.items()]
+    MCP_SETTINGS.tools = tool_names
+    MCP_SETTINGS.prompts = prompt_names
+    MCP_SETTINGS.resources = resource_names
     
-    logger.info(f"MCP server created with {len(MCP_SETTINGS.tools)} tools and {len(MCP_SETTINGS.prompts)} prompts")
+    logger.info(f"MCP server created with {len(MCP_SETTINGS.tools)} tools, {len(MCP_SETTINGS.prompts)} prompts, and {len(MCP_SETTINGS.resources)} resources")
     return server
 
 # Create a singleton MCP server instance
@@ -78,6 +79,11 @@ def start_server(transport='stdio', host=None, port=None):
     
     # Start the server
     logger.info(f"Starting MCP server with transport: {transport}")
+    
+    # Log the registered tools, prompts, and resources
+    logger.info(f"Registered tools: {MCP_SETTINGS.tools}")
+    logger.info(f"Registered prompts: {MCP_SETTINGS.prompts}")
+    logger.info(f"Registered resources: {MCP_SETTINGS.resources}")
     
     # Currently only stdio is supported in the mock implementation
     # This can be expanded when http transport is implemented

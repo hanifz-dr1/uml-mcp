@@ -10,6 +10,7 @@ import os
 import sys
 import logging
 import argparse
+import datetime
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
@@ -32,12 +33,39 @@ def parse_args():
 # Configure logging based on arguments
 def setup_logging(debug=False):
     level = logging.DEBUG if debug else logging.INFO
+    
+    # Create logs directory if it doesn't exist
+    log_dir = "logs"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # Generate log filename with today's date
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    log_file = os.path.join(log_dir, f"uml_mcp_server_{date_str}.log")
+    
+    # Configure file handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(level)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+    
+    # Configure console handler
+    console_handler = RichHandler(rich_tracebacks=True)
+    console_handler.setLevel(level)
+    
+    # Configure root logger
     logging.basicConfig(
         level=level,
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True)]
+        handlers=[console_handler]
     )
+    
+    # Get logger and add file handler
+    logger = logging.getLogger()
+    logger.addHandler(file_handler)
+    
     return logging.getLogger(__name__)
 
 # Centralized error handling for imports
@@ -49,185 +77,191 @@ def safe_import(module_name, display_name=None):
         console.print(f"[bold red]Error importing {display_name}:[/bold red] {str(e)}")
         return None
 
-# Function to display the tools
+# Function to display the tools, prompts, and resources
+def display_tools_and_resources(mcp_settings):
+    """Display information about all available tools, prompts, and resources in the MCP server"""
+    # Display tools
+    display_tools(mcp_settings)
+    
+    # Display prompts
+    display_prompts(mcp_settings)
+    
+    # Display resources
+    display_resources(mcp_settings)
+
 def display_tools(mcp_settings):
-    # Get real tool names from FastMCP server if available
-    tool_names = getattr(mcp_settings, 'registered_tool_names', [])
-    if not tool_names and hasattr(mcp_settings, 'server') and hasattr(mcp_settings.server, '_tools'):
-        tool_names = list(mcp_settings.server._tools.keys())
-    
-    # If we still don't have tool names, try to log them
-    if not tool_names:
-        # Looking for tools in server logs
-        import re
-        import glob
-        log_files = glob.glob('logs/*.log')
-        for log_file in sorted(log_files, reverse=True):
-            try:
-                with open(log_file, 'r') as f:
-                    content = f.read()
-                    match = re.search(r'Registered tools: \[(.*?)\]', content)
-                    if match:
-                        tools_str = match.group(1)
-                        tool_names = [t.strip("'") for t in tools_str.split(', ')]
-                        break
-            except Exception:
-                pass
-    
+    """Display information about available tools in the MCP server"""
     # Create tools table
     tools_table = Table(title="[bold blue]Available UML-MCP Tools[/bold blue]")
     tools_table.add_column("Tool Name", style="cyan")
     tools_table.add_column("Description", style="green")
     tools_table.add_column("Parameters", style="yellow")
     
-    # If we have tool names, use them
+    # Import tool registry if available
+    try:
+        from mcp.tools.tool_decorator import get_tool_registry
+        tool_registry = get_tool_registry()
+        
+        if tool_registry:
+            # Add rows for each tool from registry
+            for tool_name, tool_info in tool_registry.items():
+                # Skip internal tools
+                if tool_name == 'tool_function':
+                    continue
+                
+                # Get description and parameters
+                description = tool_info.get("description", "No description available")
+                
+                # Format parameters
+                params = tool_info.get("parameters", {})
+                param_str = ", ".join([f"{name}: {info['type']}" for name, info in params.items()])
+                
+                tools_table.add_row(tool_name, description, param_str)
+        else:
+            # Fallback to old method if registry not available
+            _display_tools_fallback(mcp_settings, tools_table)
+    except ImportError:
+        # Fallback to old method if decorator system not available
+        _display_tools_fallback(mcp_settings, tools_table)
+    
+    console.print(tools_table)
+
+def _display_tools_fallback(mcp_settings, tools_table):
+    """Fallback method to display tools if decorator system is not available"""
+    # Get tool names from settings
+    tool_names = getattr(mcp_settings, 'tools', [])
+    
     if tool_names:
-        # For each tool name, try to get its description and parameters
+        # Tool descriptions dictionary
+        tool_descriptions = {
+            "generate_uml": "Generate any UML diagram based on diagram type",
+            "generate_class_diagram": "Generate UML class diagram from PlantUML code",
+            "generate_sequence_diagram": "Generate UML sequence diagram from PlantUML code",
+            "generate_activity_diagram": "Generate UML activity diagram from PlantUML code",
+            "generate_usecase_diagram": "Generate UML use case diagram from PlantUML code",
+            "generate_state_diagram": "Generate UML state diagram from PlantUML code",
+            "generate_component_diagram": "Generate UML component diagram from PlantUML code",
+            "generate_deployment_diagram": "Generate UML deployment diagram from PlantUML code",
+            "generate_object_diagram": "Generate UML object diagram from PlantUML code",
+            "generate_mermaid_diagram": "Generate diagrams using Mermaid syntax",
+            "generate_d2_diagram": "Generate diagrams using D2 syntax",
+            "generate_graphviz_diagram": "Generate diagrams using Graphviz DOT syntax",
+            "generate_erd_diagram": "Generate Entity-Relationship diagrams"
+        }
+        
+        # Tool parameters dictionary
+        tool_parameters = {
+            "generate_uml": "diagram_type: str, code: str, output_dir: str",
+            "generate_class_diagram": "code: str, output_dir: str",
+            "generate_sequence_diagram": "code: str, output_dir: str",
+            "generate_activity_diagram": "code: str, output_dir: str",
+            "generate_usecase_diagram": "code: str, output_dir: str",
+            "generate_state_diagram": "code: str, output_dir: str",
+            "generate_component_diagram": "code: str, output_dir: str",
+            "generate_deployment_diagram": "code: str, output_dir: str",
+            "generate_object_diagram": "code: str, output_dir: str",
+            "generate_mermaid_diagram": "code: str, output_dir: str",
+            "generate_d2_diagram": "code: str, output_dir: str",
+            "generate_graphviz_diagram": "code: str, output_dir: str",
+            "generate_erd_diagram": "code: str, output_dir: str"
+        }
+        
+        # Add rows for each tool
         for tool_name in tool_names:
             # Skip the tool_function which is not a user-facing tool
             if tool_name == 'tool_function':
                 continue
-                
-            description = "Generate diagrams based on text descriptions"
-            parameters = "No parameters info"
             
-            # Set appropriate descriptions based on tool name
-            if "class_diagram" in tool_name:
-                description = "Generate UML class diagram from PlantUML code"
-                parameters = "code: str, output_dir: str"
-            elif "sequence_diagram" in tool_name:
-                description = "Generate UML sequence diagram from PlantUML code"
-                parameters = "code: str, output_dir: str"
-            elif "activity_diagram" in tool_name:
-                description = "Generate UML activity diagram from PlantUML code"
-                parameters = "code: str, output_dir: str"
-            elif "generate_uml" == tool_name:
-                description = "Generate any UML diagram based on diagram type"
-                parameters = "diagram_type: str, code: str, output_dir: str"
-            elif "mermaid" in tool_name:
-                description = "Generate diagrams using Mermaid syntax"
-                parameters = "code: str, output_dir: str"
-            elif "d2" in tool_name:
-                description = "Generate diagrams using D2 syntax"
-                parameters = "code: str, output_dir: str"
-            elif "graphviz" in tool_name:
-                description = "Generate diagrams using Graphviz DOT syntax"
-                parameters = "code: str, output_dir: str"
-            elif "erd" in tool_name:
-                description = "Generate Entity-Relationship diagrams"
-                parameters = "code: str, output_dir: str"
-                
+            # Get description and parameters or use defaults
+            description = tool_descriptions.get(tool_name, "Generate diagrams based on text descriptions")
+            parameters = tool_parameters.get(tool_name, "No parameters info")
+            
             tools_table.add_row(tool_name, description, parameters)
     else:
-        # Fallback to the original approach
-        if isinstance(mcp_settings.tools, dict):
-            tools_to_display = [(name, info) for name, info in mcp_settings.tools.items()]
-        else:
-            tools_to_display = []
-            for i, tool in enumerate(mcp_settings.tools):
-                tool_name = getattr(tool, "__name__", f"tool_{i}")
-                tools_to_display.append((tool_name, tool))
-        
-        for tool_name, tool_info in tools_to_display:
-            description = "No description available"
-            parameters = "No parameters info"
-            
-            if hasattr(tool_info, "__doc__") and tool_info.__doc__:
-                description = tool_info.__doc__.strip().split('\n')[0]
-            
-            if hasattr(tool_info, "__annotations__"):
-                param_list = []
-                for param_name, param_type in tool_info.__annotations__.items():
-                    if param_name != "return":
-                        type_name = getattr(param_type, "__name__", str(param_type))
-                        param_list.append(f"{param_name}: {type_name}")
-                parameters = ", ".join(param_list) if param_list else "No parameters"
-            
-            tools_table.add_row(tool_name, description, parameters)
-    
-    console.print(tools_table)
-    
-    # Get prompt names from logs if available
-    prompt_names = getattr(mcp_settings, 'registered_prompt_names', [])
-    if not prompt_names:
-        # Looking for prompts in server logs
-        import re
-        import glob
-        log_files = glob.glob('logs/*.log')
-        for log_file in sorted(log_files, reverse=True):
-            try:
-                with open(log_file, 'r') as f:
-                    content = f.read()
-                    match = re.search(r'Registered prompts: \[(.*?)\]', content)
-                    if match:
-                        prompts_str = match.group(1)
-                        prompt_names = [p.strip("'") for p in prompts_str.split(', ')]
-                        break
-            except Exception:
-                pass
-    
+        tools_table.add_row("No tools found", "Check server configuration", "")
+
+def display_prompts(mcp_settings):
+    """Display information about available prompts in the MCP server"""
     # Create prompts table
     prompts_table = Table(title="[bold blue]Available Prompts[/bold blue]")
     prompts_table.add_column("Prompt Name", style="cyan")
     prompts_table.add_column("Description", style="green")
     
-    # If we have prompt names, use them
-    if prompt_names:
-        for prompt_name in prompt_names:
-            description = "Generate UML diagrams"
-            
-            if prompt_name == "class_diagram":
-                description = "Create a UML class diagram showing classes, attributes, methods, and relationships"
-            elif prompt_name == "sequence_diagram":
-                description = "Create a UML sequence diagram showing interactions between objects over time"
-            elif prompt_name == "activity_diagram":
-                description = "Create a UML activity diagram showing workflows and business processes"
-            
-            prompts_table.add_row(prompt_name, description)
-    else:
-        # Fallback to original approach
-        if isinstance(mcp_settings.prompts, dict):
-            prompts_to_display = [(name, info) for name, info in mcp_settings.prompts.items()]
-        else:
-            prompts_to_display = []
-            for i, prompt in enumerate(mcp_settings.prompts):
-                prompt_name = getattr(prompt, "name", f"prompt_{i}")
-                prompts_to_display.append((prompt_name, prompt))
+    # Import prompt registry if available
+    try:
+        from mcp.prompts.diagram_prompts import get_prompt_registry
+        prompt_registry = get_prompt_registry()
         
-        for prompt_name, prompt_info in prompts_to_display:
-            description = "No description available"
-            if hasattr(prompt_info, "description"):
-                description = prompt_info.description
-            elif hasattr(prompt_info, "__doc__") and prompt_info.__doc__:
-                description = prompt_info.__doc__.strip().split('\n')[0]
-            
-            prompts_table.add_row(prompt_name, description)
+        if prompt_registry:
+            # Add rows for each prompt from registry
+            for prompt_name, prompt_info in prompt_registry.items():
+                # Get description
+                description = prompt_info.get("description", "No description available")
+                prompts_table.add_row(prompt_name, description)
+        else:
+            # Fallback to old method if registry not available
+            _display_prompts_fallback(mcp_settings, prompts_table)
+    except ImportError:
+        # Fallback to old method if decorator system not available
+        _display_prompts_fallback(mcp_settings, prompts_table)
     
     console.print(prompts_table)
+
+def _display_prompts_fallback(mcp_settings, prompts_table):
+    """Fallback method to display prompts if decorator system is not available"""
+    # Get prompt names from settings
+    prompt_names = getattr(mcp_settings, 'prompts', [])
     
-    # Get resource names from logs if available
-    resource_names = []
-    import re
-    import glob
-    log_files = glob.glob('logs/*.log')
-    for log_file in sorted(log_files, reverse=True):
-        try:
-            with open(log_file, 'r') as f:
-                content = f.read()
-                match = re.search(r'Registered resources: \[(.*?)\]', content)
-                if match:
-                    resources_str = match.group(1)
-                    resource_names = [r.strip("'") for r in resources_str.split(', ')]
-                    break
-        except Exception:
-            pass
-    
-    # Display resources
-    if resource_names:
-        resources_table = Table(title="[bold blue]Available Resources[/bold blue]")
-        resources_table.add_column("Resource URI", style="cyan")
-        resources_table.add_column("Description", style="green")
+    if prompt_names:
+        # Prompt descriptions dictionary
+        prompt_descriptions = {
+            "class_diagram": "Create a UML class diagram showing classes, attributes, methods, and relationships",
+            "sequence_diagram": "Create a UML sequence diagram showing interactions between objects over time",
+            "activity_diagram": "Create a UML activity diagram showing workflows and business processes"
+        }
         
+        # Add rows for each prompt
+        for prompt_name in prompt_names:
+            # Get description or use default
+            description = prompt_descriptions.get(prompt_name, "Generate UML diagrams")
+            prompts_table.add_row(prompt_name, description)
+    else:
+        prompts_table.add_row("No prompts found", "Check server configuration")
+
+def display_resources(mcp_settings):
+    """Display information about available resources in the MCP server"""
+    # Create resources table
+    resources_table = Table(title="[bold blue]Available Resources[/bold blue]")
+    resources_table.add_column("Resource URI", style="cyan")
+    resources_table.add_column("Description", style="green")
+    
+    # Import resource registry if available
+    try:
+        from mcp.resources.diagram_resources import get_resource_registry
+        resource_registry = get_resource_registry()
+        
+        if resource_registry:
+            # Add rows for each resource from registry
+            for resource_uri, resource_info in resource_registry.items():
+                # Get description
+                description = resource_info.get("description", "No description available")
+                resources_table.add_row(resource_uri, description)
+        else:
+            # Fallback to old method if registry not available
+            _display_resources_fallback(mcp_settings, resources_table)
+    except ImportError:
+        # Fallback to old method if decorator system not available
+        _display_resources_fallback(mcp_settings, resources_table)
+    
+    console.print(resources_table)
+
+def _display_resources_fallback(mcp_settings, resources_table):
+    """Fallback method to display resources if decorator system is not available"""
+    # Get resource names from settings
+    resource_names = getattr(mcp_settings, 'resources', [])
+    
+    if resource_names:
+        # Resource descriptions dictionary
         resource_descriptions = {
             "uml://types": "List of available UML diagram types",
             "uml://templates": "Templates for creating UML diagrams",
@@ -236,13 +270,18 @@ def display_tools(mcp_settings):
             "uml://server-info": "Information about the UML-MCP server"
         }
         
+        # Add rows for each resource
         for resource_name in resource_names:
+            # Get description or use default
             description = resource_descriptions.get(resource_name, "Resource information")
             resources_table.add_row(resource_name, description)
-        
-        console.print(resources_table)
+    else:
+        resources_table.add_row("No resources found", "Check server configuration")
 
 def main():
+    # Import datetime here to avoid circular import
+    import datetime
+    
     # Parse arguments and set up logging
     args = parse_args()
     logger = setup_logging(args.debug)
@@ -270,7 +309,7 @@ def main():
 
     # Import core server
     try:
-        from mcp.core.server import create_mcp_server, get_mcp_server
+        from mcp.core.server import create_mcp_server, get_mcp_server, start_server
         from mcp.core.config import MCP_SETTINGS
         
         # Update settings from command line args if applicable
@@ -279,6 +318,22 @@ def main():
         
         # Initialize the server which will register tools and prompts
         server = get_mcp_server()
+        
+        # Register all tools, prompts, and resources using decorators
+        try:
+            from mcp.tools.diagram_tools import register_diagram_tools
+            from mcp.prompts.diagram_prompts import register_diagram_prompts
+            from mcp.resources.diagram_resources import register_diagram_resources
+            
+            # Register all components
+            register_diagram_tools(server)
+            register_diagram_prompts(server)
+            register_diagram_resources(server)
+            
+            logger.info("Registered all components using decorator system")
+        except ImportError as e:
+            logger.warning(f"Could not use decorator system: {str(e)}")
+            logger.info("Falling back to traditional registration method")
         
         # Display server info (after tools and prompts are registered)
         console.print(Panel(f"[bold green]UML-MCP Server v{MCP_SETTINGS.version}[/bold green]"))
@@ -292,6 +347,7 @@ def main():
         table.add_row("Transport", args.transport)
         table.add_row("Available Tools", str(len(MCP_SETTINGS.tools)))
         table.add_row("Available Prompts", str(len(MCP_SETTINGS.prompts)))
+        table.add_row("Available Resources", str(len(MCP_SETTINGS.resources)))
         if args.transport == "http":
             table.add_row("Host", args.host)
             table.add_row("Port", str(args.port))
@@ -301,10 +357,10 @@ def main():
         # Display tools list if requested
         list_tools = args.list_tools or os.environ.get("LIST_TOOLS", "").lower() == "true"
         if list_tools:
-            display_tools(MCP_SETTINGS)
+            display_tools_and_resources(MCP_SETTINGS)
+            return
         
         # Start MCP server
-        from mcp.core.server import start_server
         start_server(transport=args.transport, host=args.host, port=args.port)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
