@@ -75,7 +75,10 @@ def register_diagram_tools(server: FastMCP):
         return generate_diagram(diagram_type, code, "svg", output_dir)
     
     # Register the generate_uml tool in a way that matches the test expectations
-    server.tool("generate_uml", generate_uml)
+    if callable(server.tool):
+        server.tool()(generate_uml)
+    else:
+        server.tool("generate_uml", generate_uml)
     
     # Register other specific diagram tools
     diagram_types = ["class", "sequence", "activity", "usecase", "state", "component", "deployment", "object"]
@@ -88,7 +91,7 @@ def register_diagram_tools(server: FastMCP):
     register_graphviz_tool(server, generate_uml)
     register_erd_tool(server, generate_uml)
     
-    logger.info(f"Registered {len(server.tool.call_args_list)} diagram tools successfully")
+    logger.info(f"Registered {len(server._tools)} diagram tools successfully")
 
 def register_specific_diagram_tool(server: FastMCP, diagram_type: str, generate_uml_func):
     """
@@ -99,7 +102,6 @@ def register_specific_diagram_tool(server: FastMCP, diagram_type: str, generate_
         diagram_type: The diagram type to register
         generate_uml_func: The generate_uml function to call
     """
-    
     def tool_function(code: str, output_dir: str) -> Dict[str, Any]:
         """Generate a specific diagram type.
         
@@ -115,7 +117,10 @@ def register_specific_diagram_tool(server: FastMCP, diagram_type: str, generate_
     
     # Register the tool with the server in a way that matches test expectations
     tool_name = f"generate_{diagram_type}_diagram"
-    server.tool(tool_name, tool_function)
+    if callable(server.tool):
+        server.tool()(tool_function)
+    else:
+        server.tool(tool_name, tool_function)
 
 def register_mermaid_tool(server: FastMCP, generate_uml_func):
     """
@@ -126,85 +131,47 @@ def register_mermaid_tool(server: FastMCP, generate_uml_func):
         generate_uml_func: The generate_uml function to call
     """
     def generate_mermaid_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a Mermaid diagram.
-        
-        Args:
-            code: The Mermaid diagram code
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, playground link, and local file path
-        """
+        """Generate a Mermaid diagram."""
         logger.info(f"Called generate_mermaid_diagram tool: code length={len(code)}")
         return generate_uml_func("mermaid", code, output_dir)
     
-    server.tool("generate_mermaid_diagram", generate_mermaid_diagram)
+    if callable(server.tool):
+        server.tool()(generate_mermaid_diagram)
+    else:
+        server._tools["generate_mermaid_diagram"] = generate_mermaid_diagram
 
 def register_d2_tool(server: FastMCP, generate_uml_func):
-    """
-    Register D2 diagram tool
-    
-    Args:
-        server: The MCP server instance
-        generate_uml_func: The generate_uml function to call
-    """
+    """Register D2 diagram tool"""
     def generate_d2_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a D2 diagram.
-        
-        Args:
-            code: The D2 diagram code
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, playground link, and local file path
-        """
+        """Generate a D2 diagram."""
         logger.info(f"Called generate_d2_diagram tool: code length={len(code)}")
         return generate_uml_func("d2", code, output_dir)
     
-    server.tool("generate_d2_diagram", generate_d2_diagram)
+    if callable(server.tool):
+        server.tool()(generate_d2_diagram)
+    else:
+        server._tools["generate_d2_diagram"] = generate_d2_diagram
 
 def register_graphviz_tool(server: FastMCP, generate_uml_func):
-    """
-    Register Graphviz diagram tool
-    
-    Args:
-        server: The MCP server instance
-        generate_uml_func: The generate_uml function to call
-    """
+    """Register Graphviz diagram tool"""
     def generate_graphviz_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate a Graphviz diagram.
-        
-        Args:
-            code: The Graphviz (DOT) diagram code
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, playground link, and local file path
-        """
+        """Generate a Graphviz diagram."""
         logger.info(f"Called generate_graphviz_diagram tool: code length={len(code)}")
         return generate_uml_func("graphviz", code, output_dir)
     
-    server.tool("generate_graphviz_diagram", generate_graphviz_diagram)
+    if callable(server.tool):
+        server.tool()(generate_graphviz_diagram)
+    else:
+        server._tools["generate_graphviz_diagram"] = generate_graphviz_diagram
 
 def register_erd_tool(server: FastMCP, generate_uml_func):
-    """
-    Register ERD diagram tool
-    
-    Args:
-        server: The MCP server instance
-        generate_uml_func: The generate_uml function to call
-    """
+    """Register ERD diagram tool"""
     def generate_erd_diagram(code: str, output_dir: str) -> Dict[str, Any]:
-        """Generate an Entity-Relationship diagram.
-        
-        Args:
-            code: The ERD diagram code
-            output_dir: Directory where to save the generated image
-        
-        Returns:
-            Dictionary containing code, URL, and local file path
-        """
+        """Generate an Entity-Relationship diagram."""
         logger.info(f"Called generate_erd_diagram tool: code length={len(code)}")
         return generate_uml_func("erd", code, output_dir)
     
-    server.tool("generate_erd_diagram", generate_erd_diagram)
+    if callable(server.tool):
+        server.tool()(generate_erd_diagram)
+    else:
+        server._tools["generate_erd_diagram"] = generate_erd_diagram

@@ -1,23 +1,6 @@
-name: UML-MCP CI/CD Pipeline
+name: UML-MCP CD Pipeline
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "mcp/**"
-      - "kroki/**"
-      - "mermaid/**"
-      - "plantuml/**"
-      - "D2/**"
-      - "ai_uml/**"
-      - "mcp_server.py"
-      - "smithery.yaml"
-      - "Dockerfile"
-      - "pyproject.toml"
-      - "requirements.txt"
-      - ".github/workflows/**"
-  pull_request:
-    branches: [main]
   release:
     types: [created]
   workflow_dispatch:
@@ -38,13 +21,6 @@ on:
         default: false
 
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
-    
-  build:
-    needs: test
-    uses: ./.github/workflows/build.yml
-    
   publish:
     needs: build
     if: |
@@ -54,7 +30,7 @@ jobs:
     with:
       version_increment: ${{ github.event.inputs.version_increment }}
     secrets: inherit
-    
+
   deploy:
     needs: build
     if: |
