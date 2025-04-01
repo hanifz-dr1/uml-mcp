@@ -6,27 +6,7 @@ import logging
 import os
 from typing import Dict, Any, List, Optional
 
-# Import FastMCP with error handling to fix testing issues
-try:
-    from mcp.server import FastMCP
-except ImportError:
-    # Mock FastMCP for testing environments
-    class FastMCP:
-        def __init__(self):
-            self._tools = {}
-        
-        def tool(self, *args, **kwargs):
-            if args and callable(args[0]):
-                # Called as a decorator with no arguments
-                func = args[0]
-                self._tools[func.__name__] = func
-                return func
-            else:
-                # Called with arguments or no arguments
-                def decorator(func):
-                    self._tools[func.__name__] = func
-                    return func
-                return decorator
+from mcp_core.server.fastmcp_wrapper import FastMCP
 
 # Import the tool decorator system
 from .tool_decorator import mcp_tool, register_tools_with_server, get_tool_registry

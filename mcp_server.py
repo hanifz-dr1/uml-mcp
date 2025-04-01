@@ -99,7 +99,7 @@ def display_tools(mcp_settings):
     
     # Import tool registry if available
     try:
-        from mcp.tools.tool_decorator import get_tool_registry
+        from mcp_core.tools.tool_decorator import get_tool_registry
         tool_registry = get_tool_registry()
         
         if tool_registry:
@@ -189,7 +189,7 @@ def display_prompts(mcp_settings):
     
     # Import prompt registry if available
     try:
-        from mcp.prompts.diagram_prompts import get_prompt_registry
+        from mcp_core.prompts.diagram_prompts import get_prompt_registry
         prompt_registry = get_prompt_registry()
         
         if prompt_registry:
@@ -237,7 +237,7 @@ def display_resources(mcp_settings):
     
     # Import resource registry if available
     try:
-        from mcp.resources.diagram_resources import get_resource_registry
+        from mcp_core.resources.diagram_resources import get_resource_registry
         resource_registry = get_resource_registry()
         
         if resource_registry:
@@ -309,31 +309,16 @@ def main():
 
     # Import core server
     try:
-        from mcp.core.server import create_mcp_server, get_mcp_server, start_server
-        from mcp.core.config import MCP_SETTINGS
+        from mcp_core.core.server import create_mcp_server, get_mcp_server, start_server
+        from mcp_core.core.config import MCP_SETTINGS
         
         # Update settings from command line args if applicable
         if hasattr(MCP_SETTINGS, 'update_from_args'):
             MCP_SETTINGS.update_from_args(args)
         
-        # Initialize the server which will register tools and prompts
+        # Check if we need to create a new server or get an existing one
+        # Note: get_mcp_server() already registers components when first called
         server = get_mcp_server()
-        
-        # Register all tools, prompts, and resources using decorators
-        try:
-            from mcp.tools.diagram_tools import register_diagram_tools
-            from mcp.prompts.diagram_prompts import register_diagram_prompts
-            from mcp.resources.diagram_resources import register_diagram_resources
-            
-            # Register all components
-            register_diagram_tools(server)
-            register_diagram_prompts(server)
-            register_diagram_resources(server)
-            
-            logger.info("Registered all components using decorator system")
-        except ImportError as e:
-            logger.warning(f"Could not use decorator system: {str(e)}")
-            logger.info("Falling back to traditional registration method")
         
         # Display server info (after tools and prompts are registered)
         console.print(Panel(f"[bold green]UML-MCP Server v{MCP_SETTINGS.version}[/bold green]"))

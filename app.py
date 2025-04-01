@@ -34,8 +34,8 @@ app.add_middleware(
 
 # Import local modules
 try:
-    from mcp.core.utils import generate_diagram
-    from mcp.core.config import MCP_SETTINGS
+    from mcp_core.core.utils import generate_diagram
+    from mcp_core.core.config import MCP_SETTINGS
     from kroki.kroki import LANGUAGE_OUTPUT_SUPPORT
     HAS_MODULES = True
 except ImportError:

@@ -4,7 +4,8 @@ MCP prompts for diagram generation using the decorator pattern
 import logging
 from typing import Dict, List, Any, Optional, Callable, TypeVar, cast
 
-from mcp.server.fastmcp_wrapper import FastMCP
+# Import FastMCP from wrapper to avoid circular imports
+from mcp_core.server.fastmcp_wrapper import FastMCP
 from ..core.config import MCP_SETTINGS
 
 logger = logging.getLogger(__name__)

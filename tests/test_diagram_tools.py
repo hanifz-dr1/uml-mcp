@@ -4,7 +4,7 @@ Unit tests for diagram tool functions
 import pytest
 from unittest.mock import patch, MagicMock
 
-from mcp.tools.diagram_tools import register_diagram_tools
+from mcp_core.tools.diagram_tools import register_diagram_tools
 
 class TestDiagramTools:
     """Test suite for diagram tools functionality"""

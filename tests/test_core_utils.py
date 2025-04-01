@@ -5,8 +5,8 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
-from mcp.core.utils import generate_diagram
-from mcp.core.config import MCP_SETTINGS
+from mcp_core.core.utils import generate_diagram
+from mcp_core.core.config import MCP_SETTINGS
 
 @pytest.fixture
 def mock_kroki_client():

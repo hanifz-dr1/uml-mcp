@@ -1,37 +1,15 @@
 """
-MCP tools decorator system for simplified tool registration
+Decorator system for MCP tools
 """
-
 import logging
 import inspect
-import functools
-from typing import Dict, Any, List, Callable, Optional, TypeVar, cast
+from typing import Dict, List, Any, Optional, Callable, TypeVar, cast
 
-# Import FastMCP with error handling to support testing environments
-try:
-    from mcp.server import FastMCP
-except ImportError:
-    # Mock FastMCP for testing environments
-    class FastMCP:
-        def __init__(self):
-            self._tools = {}
-        
-        def tool(self, *args, **kwargs):
-            if args and callable(args[0]):
-                # Called as a decorator with no arguments
-                func = args[0]
-                self._tools[func.__name__] = func
-                return func
-            else:
-                # Called with arguments or no arguments
-                def decorator(func):
-                    self._tools[func.__name__] = func
-                    return func
-                return decorator
+from mcp_core.server.fastmcp_wrapper import FastMCP
 
 logger = logging.getLogger(__name__)
 
-# Store for registered tools when using the decorator pattern
+# Store for registered tools when using decorator pattern
 _registered_tools: Dict[str, Dict[str, Any]] = {}
 
 F = TypeVar('F', bound=Callable[..., Any])
