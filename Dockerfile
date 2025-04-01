@@ -8,25 +8,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     graphviz \
     curl \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file first for better caching
-COPY requirements.txt ./
-
-# Install Python dependencies, but filter out problematic dependencies
-RUN grep -v "^mcp>=1.2.0" requirements.txt > requirements-filtered.txt && \
-    grep -v "^mermaid-cli>=0.0.1" requirements-filtered.txt > requirements-clean.txt && \
-    pip install --no-cache-dir -r requirements-clean.txt
+# Copy requirements and install dependencies first (for better caching)
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY . .
-
-# Create __init__.py files in all packages (if they don't exist)
-RUN for dir in kroki mermaid plantuml D2 ai_uml; do \
-      mkdir -p "$dir"; \
-      [ ! -f "$dir/__init__.py" ] && touch "$dir/__init__.py" || true; \
-    done
 
 # Create output directory
 RUN mkdir -p /app/output
@@ -34,5 +23,5 @@ RUN mkdir -p /app/output
 # Expose port for API
 EXPOSE 8000
 
-# Set entrypoint for stdio mode
-ENTRYPOINT ["python", "mcp_server.py", "--transport", "stdio"]
+# Command to run the MCP server
+CMD ["python", "mcp_server.py"]
