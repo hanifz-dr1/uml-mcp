@@ -1,4 +1,4 @@
-# Smithery.ai configuration
+# Smithery.ai configuration file: https://smithery.ai/docs/deployments
 name: uml-mcp
 version: "1.2.0"
 description: "UML diagram generation server with MCP interface supporting PlantUML, Mermaid, Kroki, and D2"
@@ -44,14 +44,6 @@ startCommand:
         type: "string"
         description: "PlantUML server URL for diagram rendering (leave empty to use Kroki)"
         default: ""
-      enabled_formats:
-        type: "array"
-        description: "Enabled diagram formats (leave empty for all formats)"
-        items:
-          type: "string"
-          enum: ["plantuml", "mermaid", "d2", "graphviz", "erd"]
-        default: []
-    required: []
     additionalProperties: false
     description: "Configuration for UML diagram generation server"
   commandFunction: |-
@@ -104,11 +96,6 @@ startCommand:
         env.PLANTUML_SERVER = config.plantuml_server;
       }
       
-      // Add enabled formats
-      if (config.enabled_formats && config.enabled_formats.length > 0) {
-        env.ENABLED_FORMATS = config.enabled_formats.join(",");
-      }
-      
       // Return command configuration
       return {
         command: "python",
@@ -122,13 +109,133 @@ startCommand:
     "transport": "stdio",
     "log_level": "INFO"
   }
-  healthCheck:
-    interval: "30s"
-    timeout: "5s"
-    retries: 3
-    startPeriod: "10s"
 
 # Build configuration
 build:
   dockerBuildPath: "../../"
-  dockerfile: "./Dockerfile"
+
+# MCP tools information
+tools:
+  - name: "generate_uml"
+    description: "Generate a UML diagram using the specified diagram type"
+    parameters:
+      - name: "diagram_type"
+        type: "string"
+        description: "Type of diagram (class, sequence, activity, etc.)"
+        required: true
+      - name: "code"
+        type: "string"
+        description: "The diagram code/description"
+        required: true
+      - name: "output_dir"
+        type: "string"
+        description: "Directory where to save the generated image"
+        required: true
+    returns: "Dictionary containing code, URL, and local file path"
+
+  - name: "generate_mermaid_diagram"
+    description: "Generate a Mermaid diagram"
+    parameters:
+      - name: "code"
+        type: "string"
+        description: "The Mermaid diagram code"
+        required: true
+      - name: "output_dir"
+        type: "string"
+        description: "Directory where to save the generated image"
+        required: true
+    returns: "Dictionary containing code, URL, and local file path"
+
+  - name: "generate_d2_diagram"
+    description: "Generate a D2 diagram"
+    parameters:
+      - name: "code"
+        type: "string"
+        description: "The D2 diagram code"
+        required: true
+      - name: "output_dir"
+        type: "string"
+        description: "Directory where to save the generated image"
+        required: true
+    returns: "Dictionary containing code, URL, and local file path"
+
+  - name: "generate_graphviz_diagram"
+    description: "Generate a Graphviz diagram"
+    parameters:
+      - name: "code"
+        type: "string"
+        description: "The Graphviz diagram code"
+        required: true
+      - name: "output_dir"
+        type: "string"
+        description: "Directory where to save the generated image"
+        required: true
+    returns: "Dictionary containing code, URL, and local file path"
+
+  - name: "generate_erd_diagram"
+    description: "Generate an Entity-Relationship diagram"
+    parameters:
+      - name: "code"
+        type: "string"
+        description: "The ERD diagram code"
+        required: true
+      - name: "output_dir"
+        type: "string"
+        description: "Directory where to save the generated image"
+        required: true
+    returns: "Dictionary containing code, URL, and local file path"
+
+  - name: "tool_function"
+    description: "Internal function used by specific diagram tools"
+    internal: true
+
+# MCP prompts information
+prompts:
+  - name: "class_diagram"
+    description: "Prompt for generating UML class diagrams"
+    example: |
+      Please help me create a class diagram using PlantUML. Include:
+      1. Classes with attributes and methods
+      2. Relationships between classes (association, inheritance, composition)
+      3. Access modifiers for attributes and methods (+public, -private, #protected)
+
+  - name: "sequence_diagram"
+    description: "Prompt for generating UML sequence diagrams"
+    example: |
+      Please help me create a sequence diagram using PlantUML. Include:
+      1. Participants/actors in the sequence
+      2. Messages between participants with clear direction
+      3. Lifelines and activation boxes where appropriate
+      4. Optional: Notes, conditional logic, loops
+
+  - name: "activity_diagram"
+    description: "Prompt for generating UML activity diagrams"
+    example: |
+      Please help me create an activity diagram using PlantUML. Include:
+      1. Start and end points
+      2. Activities/actions
+      3. Decision points with conditions
+      4. Transitions between activities
+      5. Optional: Swim lanes for organizing activities by actor/system
+
+# MCP resources information
+resources:
+  - name: "uml://types"
+    description: "Get available diagram types"
+    returns: "Object mapping diagram type names to their configuration"
+
+  - name: "uml://templates"
+    description: "Get diagram templates for different diagram types"
+    returns: "Object mapping diagram types to template code"
+
+  - name: "uml://examples"
+    description: "Get diagram examples for different diagram types"
+    returns: "Object mapping diagram types to example code"
+
+  - name: "uml://formats"
+    description: "Get supported output formats for each diagram type"
+    returns: "Object mapping diagram types to supported output formats"
+
+  - name: "uml://server-info"
+    description: "Get MCP server information"
+    returns: "Object containing server configuration details"
