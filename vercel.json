@@ -1,21 +1,48 @@
 {
-  "devCommand": "pip install -r requirements-dev.txt && pip install --upgrade pip && uvicorn app:app --host 0.0.0.0 --port 5003",
   "version": 2,
+  "buildCommand": "pip install -r requirements.txt -r requirements-dev.txt",
+  "installCommand": "pip install --upgrade pip",
+  "framework": null,
+  "outputDirectory": ".vercel/output/static",
   "builds": [
     {
       "src": "app.py",
       "use": "@vercel/python",
       "config": {
-        "buildCommand": "pip install -r requirements.txt && pip install --upgrade pip && uvicorn app:app --host 0.0.0.0 --port 5003",
-        "debug": true,
-        "excludeFiles": "docs/**, test/**, *test.py, .github/**,requirements.txt, SECURITY.md, .pre-commit.config.yaml, renovate.json, .gitignore, .gitattributes, .git, diagram_mcp/**, diagram_mcp_cli.py"
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.10"
       }
+    },
+    {
+      "src": "favicon.ico",
+      "use": "@vercel/static"
+    },
+    {
+      "src": ".well-known/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
+      "src": "/.well-known/(.*)",
+      "dest": "/.well-known/$1"
+    },
+    {
+      "src": "/logo.png",
+      "dest": "/favicon.ico"
+    },
+    {
       "src": "/(.*)",
-      "dest": "app.py"
+      "dest": "/app.py"
     }
-  ]
+  ],
+  "env": {
+    "KROKI_SERVER": "https://kroki.io",
+    "VERCEL_OUTPUT_DIR": "/tmp/diagrams"
+  },
+  "functions": {
+    "app.py": {
+      "includeFiles": "mcp/**,kroki/**,mermaid/**,plantuml/**,D2/**,*.py,*.json,*.ico,.well-known/**"
+    }
+  }
 }

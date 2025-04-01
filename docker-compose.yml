@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  uml-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./output:/app/output
+    environment:
+      - MCP_OUTPUT_DIR=/app/output
+      - USE_LOCAL_KROKI=true
+      - KROKI_SERVER=http://kroki:8000
+    depends_on:
+      - kroki
+      - blockdiag
+      - mermaid
+    restart: unless-stopped
+
+  kroki:
+    image: yuzutech/kroki
+    ports:
+      - "8001:8000"
+    environment:
+      - KROKI_BLOCKDIAG_HOST=blockdiag
+      - KROKI_MERMAID_HOST=mermaid
+    restart: unless-stopped
+
+  mermaid:
+    image: yuzutech/kroki-mermaid
+    restart: unless-stopped
+
+  blockdiag:
+    image: yuzutech/kroki-blockdiag
+    restart: unless-stopped
+
+volumes:
+  output:

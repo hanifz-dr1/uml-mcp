@@ -7,7 +7,7 @@ import json
 import os
 from typing import Dict, Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import FastMCP
 from ..core.utils import generate_diagram
 from ..core.config import MCP_SETTINGS
 
@@ -56,6 +56,9 @@ def register_diagram_tools(server: FastMCP):
     register_mermaid_tool(server)
     register_d2_tool(server)
     register_graphviz_tool(server)
+    register_erd_tool(server)  # Add ERD tool registration
+    
+    logger.info(f"Registered {len(server._tools)} diagram tools successfully")
 
 def register_specific_diagram_tool(server: FastMCP, diagram_type: str):
     """

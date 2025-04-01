@@ -1,0 +1,45 @@
+Privacy Policy for UML Diagram Generator Plugin
+
+Last Updated: 2023-06-01
+
+This privacy policy describes how the UML Diagram Generator Plugin ("we", "our", or "the plugin") collects, uses, and handles your information when you use our services.
+
+1. Information We Collect
+
+The UML Diagram Generator Plugin collects the following information:
+- Diagram code/text that you provide for generation
+- Basic usage statistics (number of requests, types of diagrams generated)
+- Technical information necessary to provide the service
+
+We do not collect or store:
+- Personal identifying information
+- User credentials or authentication tokens
+- Chat history before or after the diagram generation request
+
+2. How We Use Information
+
+We use the information collected to:
+- Generate diagrams based on your specifications
+- Improve the plugin's functionality and performance
+- Debug issues that may arise during usage
+- Monitor usage patterns to optimize service delivery
+
+3. Information Sharing
+
+We do not sell, rent, or lease your information to third parties. Your diagram code is processed through our service and may be processed by Kroki.io or other diagram generation backends as needed to fulfill your request.
+
+4. Data Retention
+
+Diagram code and generated images are temporarily stored only for the duration needed to process your request and are automatically deleted afterward. We may retain anonymized usage statistics for service improvement purposes.
+
+5. Security
+
+We implement reasonable security measures to protect the information we collect and maintain. However, no method of transmission over the Internet or electronic storage is 100% secure.
+
+6. Changes to This Policy
+
+We may update this Privacy Policy from time to time. We will notify users of any material changes by updating the "Last Updated" date at the top of this policy.
+
+7. Contact Us
+
+If you have any questions about this Privacy Policy, please contact us at privacy@example.com.

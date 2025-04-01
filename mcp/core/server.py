@@ -65,11 +65,26 @@ def get_mcp_server() -> FastMCP:
         _mcp_server = create_mcp_server()
     return _mcp_server
 
-def start_server():
-    """Start the MCP server"""
+def start_server(transport='stdio', host=None, port=None):
+    """Start the MCP server
+    
+    Args:
+        transport (str): Transport protocol to use ('stdio' or 'http')
+        host (str, optional): Host to bind to when using HTTP transport
+        port (int, optional): Port to bind to when using HTTP transport
+    """
     # Get the server
     server = get_mcp_server()
     
     # Start the server
-    logger.info("Starting MCP server")
-    server.run(transport='stdio')
+    logger.info(f"Starting MCP server with transport: {transport}")
+    
+    # Currently only stdio is supported in the mock implementation
+    # This can be expanded when http transport is implemented
+    if transport != 'stdio' and hasattr(server, '_transport_http'):
+        logger.info(f"Starting HTTP server on {host}:{port}")
+        server.run(transport='http', host=host, port=port)
+    else:
+        if transport != 'stdio':
+            logger.warning(f"Transport '{transport}' not supported, falling back to stdio")
+        server.run(transport='stdio')

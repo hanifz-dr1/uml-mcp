@@ -1,0 +1,43 @@
+version: "1.0"
+name: "uml-mcp"
+description: "UML diagram generation server with MCP interface"
+
+variables:
+  default_output_dir: "./output"
+  api_port: 8000
+  kroki_port: 8001
+
+environments:
+  development:
+    docker:
+      compose: "docker-compose.yml"
+    setup:
+      - cmd: "uv pip install uv"
+      - cmd: "uv poetry install --with dev"
+    commands:
+      start:
+        - cmd: "python mcp_server.py"
+    
+  test:
+    docker:
+      compose: "docker-compose.yml"
+    setup:
+      - cmd: "uv pip install uv"
+      - cmd: "uv poetry install --with dev"
+    commands:
+      test:
+        - cmd: "python -m pytest -xvs"
+      lint:
+        - cmd: "pre-commit run --all-files"
+      coverage:
+        - cmd: "python -m pytest"
+
+  production:
+    docker:
+      compose: "docker-compose.yml"
+    setup:
+      - cmd: "uv pip install uv"
+      - cmd: "uv poetry install --without dev"
+    commands:
+      start:
+        - cmd: "python mcp_server.py"
