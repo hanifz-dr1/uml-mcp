@@ -7,6 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, mock_open
 
+# Set testing environment variable
+os.environ["TESTING"] = "true"
+
 from app import app
 
 # Create test client

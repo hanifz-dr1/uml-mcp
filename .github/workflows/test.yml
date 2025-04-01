@@ -20,12 +20,27 @@ jobs:
           python-version: '3.9'
 
       - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.1.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Configure Poetry
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> $GITHUB_ENV
+          poetry config virtualenvs.in-project true
 
       - name: Install dependencies
-        run: poetry install --with dev
+        run: |
+          poetry install --with dev
 
       - name: Run tests
-        run: poetry run pytest --cov=mcp --cov-report=term --cov-report=html
+        run: |
+          poetry run pytest --cov=mcp --cov-report=term --cov-report=html
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+          retention-days: 14

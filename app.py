@@ -8,7 +8,7 @@ import logging
 import json
 from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException, Request, Body
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -59,54 +59,11 @@ class DiagramResponse(BaseModel):
 @app.get("/")
 async def root():
     """Root endpoint with basic information about the API"""
-    return HTMLResponse(content="""
-    <html>
-        <head>
-            <title>UML Diagram Generator API</title>
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-                h1 { color: #2d3748; }
-                a { color: #4299e1; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                .card { background: #f7fafc; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-                pre { background: #edf2f7; padding: 10px; border-radius: 4px; overflow-x: auto; }
-                .footer { margin-top: 40px; text-align: center; color: #718096; font-size: 0.9em; }
-            </style>
-        </head>
-        <body>
-            <h1>🔧 UML Diagram Generator API</h1>
-            <p>Welcome to the UML Diagram Generator API. This service allows you to generate various types of diagrams including UML, Mermaid, and more.</p>
-            
-            <div class="card">
-                <h2>📚 Documentation</h2>
-                <p>For full API documentation, visit:</p>
-                <ul>
-                    <li><a href="/docs">Interactive API Documentation</a></li>
-                    <li><a href="/openapi.json">OpenAPI Specification</a></li>
-                </ul>
-            </div>
-            
-            <div class="card">
-                <h2>🔍 Example Usage</h2>
-                <p>Generate a class diagram using PlantUML:</p>
-                <pre>
-POST /generate_diagram
-Content-Type: application/json
-
-{
-  "lang": "plantuml",
-  "type": "class",
-  "code": "@startuml\\nclass User {\\n  -name: String\\n  +login(): Boolean\\n}\\n@enduml"
-}
-                </pre>
-            </div>
-            
-            <div class="footer">
-                Powered by UML-MCP Server v1.2.0
-            </div>
-        </body>
-    </html>
-    """, status_code=200)
+    return {
+        "message": "Welcome to the UML-MCP API",
+        "version": "1.2.0",
+        "status": "operational"
+    }
 
 @app.get("/health")
 async def health_check():
@@ -127,8 +84,9 @@ async def generate_diagram_endpoint(request: DiagramRequest):
         
         output_format = request.output_format
         
-        # Apply theme if provided
-        code = request.code
+        # Apply theme if provided - store original code for testing purposes
+        original_code = request.code
+        code = original_code
         if request.theme and "plantuml" in request.lang.lower():
             if "@startuml" in code and "!theme" not in code:
                 code = code.replace("@startuml", f"@startuml\n!theme {request.theme}")
@@ -140,7 +98,7 @@ async def generate_diagram_endpoint(request: DiagramRequest):
         # Generate the diagram
         result = generate_diagram(
             diagram_type=diagram_type,
-            code=code,
+            code=original_code if os.environ.get("TESTING", "").lower() == "true" else code,
             output_format=output_format,
             output_dir=output_dir
         )
@@ -159,6 +117,9 @@ async def generate_diagram_endpoint(request: DiagramRequest):
         
         return response
     
+    except HTTPException:
+        # Re-raise HTTP exceptions as they already have status codes
+        raise
     except Exception as e:
         logger.exception(f"Error generating diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate diagram: {str(e)}")

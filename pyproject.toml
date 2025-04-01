@@ -10,6 +10,14 @@ authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/yourusername/uml-mcp"
+packages = [
+    { include = "mcp" },
+    { include = "kroki" },
+    { include = "mermaid" },
+    { include = "plantuml" },
+    { include = "D2" },
+    { include = "ai_uml" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -17,10 +25,7 @@ fastapi = "^0.103.1"
 uvicorn = "^0.23.2"
 pydantic = "^2.3.0"
 rich = "^13.5.2"
-kroki = {path = "./kroki", develop = true}
-mermaid = {path = "./mermaid", develop = true}
-plantuml = {path = "./plantuml", develop = true}
-D2 = {path = "./D2", develop = true}
+httpx = "^0.25.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
