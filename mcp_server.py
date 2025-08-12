@@ -19,20 +19,31 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent, PromptMessage, GetPromptResult
 
 # Configuration: Use PlantUML server (can be overridden with env var)
-PLANTUML_SERVER = os.environ.get("PLANTUML_SERVER", "http://www.plantuml.com/plantuml")
+# Check for local PlantUML server first, fallback to public server
+USE_LOCAL_PLANTUML = os.environ.get("USE_LOCAL_PLANTUML", "true").lower() == "true"
+LOCAL_PLANTUML_SERVER = "http://localhost:8080"  # Docker PlantUML server
+PUBLIC_PLANTUML_SERVER = "http://www.plantuml.com/plantuml"
+
+# Use local server if enabled, otherwise use environment variable or public server
+if USE_LOCAL_PLANTUML:
+    PLANTUML_SERVER = os.environ.get("PLANTUML_SERVER", LOCAL_PLANTUML_SERVER)
+else:
+    PLANTUML_SERVER = os.environ.get("PLANTUML_SERVER", PUBLIC_PLANTUML_SERVER)
 
 
 def encode_plantuml(text: str) -> str:
     """Encode PlantUML text using zlib and base64."""
     compressed = zlib.compress(text.encode("utf-8"))
-    # Strip the first two and last four bytes per PlantUML spec
-    return base64.urlsafe_b64encode(compressed[2:-4]).decode("utf-8")
+    # Use full compressed data and add ~1 prefix for HUFFMAN encoding
+    encoded = base64.urlsafe_b64encode(compressed[2:-4]).decode("utf-8").rstrip("=")
+    return encoded
 
 
 def generate_diagram(code: str, fmt: str = "svg") -> Dict[str, Any]:
     """Generate a diagram URL using the PlantUML server."""
     encoded = encode_plantuml(code)
-    url = f"{PLANTUML_SERVER}/{fmt}/{encoded}"
+    # Add ~1 prefix to indicate HUFFMAN encoding
+    url = f"{PLANTUML_SERVER}/{fmt}/~1{encoded}"
     return {"url": url, "code": code}
 
 
@@ -50,7 +61,12 @@ def generate_uml(diagram_type: str, code: str) -> Dict[str, Any]:
 # Register an MCP resource to expose server info
 @server.resource("uml://info")
 def get_info() -> Dict[str, Any]:
-    return {"server": "UML Diagram Generator", "version": "1.0"}
+    return {
+        "server": "UML Diagram Generator",
+        "version": "1.0",
+        "plantuml_server": PLANTUML_SERVER,
+        "mode": "local" if USE_LOCAL_PLANTUML else "remote"
+    }
 
 
 # Register an MCP prompt with a simple template
@@ -82,6 +98,8 @@ def info():
     table = Table("Property", "Value")
     table.add_row("Server", "UML Diagram Generator")
     table.add_row("Version", "1.0")
+    table.add_row("PlantUML Server", PLANTUML_SERVER)
+    table.add_row("Mode", "Local" if USE_LOCAL_PLANTUML else "Remote")
     console.print(table)
 
 
